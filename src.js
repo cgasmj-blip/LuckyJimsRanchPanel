@@ -17,10 +17,11 @@ async function refreshOrdersLive(){
   try{
     const data=await fetchAllRows('ranch_orders');
     if(!session||session.user.id!==activeUserId||!member||tab!=='orders')return;
-    const before=JSON.stringify(orders.map(x=>[x.id,x.status,x.updated_at,x.order_number,x.total_amount]));
+    const orderSnapshot=list=>JSON.stringify(list.map(x=>[x.id,x.status,x.updated_at,x.order_number,x.order_date,x.company,x.phone,x.products,x.total_amount,x.employee_in_charge,x.data]));
+    const before=orderSnapshot(orders);
     orders=data;
-    const after=JSON.stringify(orders.map(x=>[x.id,x.status,x.updated_at,x.order_number,x.total_amount]));
-    if(before!==after&&tab==='orders'){const searchBox=document.querySelector('#order-search'),statusBox=document.querySelector('#order-status');const search=searchBox?.value||'',status=statusBox?.value||'';const focused=document.activeElement===searchBox?'search':document.activeElement===statusBox?'status':null;const caret=focused==='search'?searchBox.selectionStart:null;view();const nextSearch=document.querySelector('#order-search'),nextStatus=document.querySelector('#order-status');if(nextSearch&&nextStatus){nextSearch.value=search;nextStatus.value=status;nextSearch.dispatchEvent(new Event('input'));if(focused==='search'){nextSearch.focus();if(caret!==null)nextSearch.setSelectionRange(caret,caret)}else if(focused==='status')nextStatus.focus()}}
+    const after=orderSnapshot(orders);
+    if(before!==after&&tab==='orders'){const searchBox=document.querySelector('#order-search'),statusBox=document.querySelector('#order-status');const search=searchBox?.value||'',status=statusBox?.value||'';const focused=document.activeElement===searchBox?'search':document.activeElement===statusBox?'status':null;const caret=focused==='search'?searchBox.selectionStart:null;const selectionEnd=focused==='search'?searchBox.selectionEnd:null;view();const nextSearch=document.querySelector('#order-search'),nextStatus=document.querySelector('#order-status');if(nextSearch&&nextStatus){nextSearch.value=search;nextStatus.value=status;nextSearch.dispatchEvent(new Event('input'));if(focused==='search'){nextSearch.focus();if(caret!==null)nextSearch.setSelectionRange(caret,selectionEnd??caret)}else if(focused==='status')nextStatus.focus()}}
   }catch(e){console.warn('Ranch orders refresh',e.message)}
   finally{ordersRefreshBusy=false}
 }
