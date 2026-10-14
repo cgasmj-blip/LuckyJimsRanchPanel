@@ -15,9 +15,9 @@ async function refreshOrdersLive(){
   try{
     const {data,error}=await db.from('ranch_orders').select('*').order('created_at',{ascending:false}).limit(500);
     if(error)throw error;
-    const before=JSON.stringify(orders.map(x=>[x.id,x.status,x.updated_at]));
+    const before=JSON.stringify(orders.map(x=>[x.id,x.status,x.updated_at,x.order_number,x.total_amount]));
     orders=(data||[]).reverse();
-    const after=JSON.stringify(orders.map(x=>[x.id,x.status,x.updated_at]));
+    const after=JSON.stringify(orders.map(x=>[x.id,x.status,x.updated_at,x.order_number,x.total_amount]));
     if(before!==after&&tab==='orders')view();
   }catch(e){console.warn('Ranch orders refresh',e.message)}
   finally{ordersRefreshBusy=false}
