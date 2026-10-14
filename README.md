@@ -24,3 +24,7 @@ Panel web indépendant du relais Discord et du projet LSPD/EMS.
 
 ## État réel
 **Version de démarrage, non prête à déployer en production.** À terminer : politiques RLS, vérification du schéma existant, gestion avancée des articles et des tarifs, validation de livraisons, paies complètes, stocks, recettes et transformations, gestion des comptes, import des articles et tests. Le projet ne gère pas les commandes.
+
+
+## Publication
+Le site est publié par GitHub Actions vers GitHub Pages. Configurer les variables Actions `VITE_SUPABASE_URL` et `VITE_SUPABASE_ANON_KEY`, puis lancer le workflow `Deploy Lucky Jim's Ranch to GitHub Pages`.
