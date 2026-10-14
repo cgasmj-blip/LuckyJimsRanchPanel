@@ -1,10 +1,10 @@
 import {createClient} from '@supabase/supabase-js';
 import './style.css';
 const url=import.meta.env.VITE_SUPABASE_URL,key=import.meta.env.VITE_SUPABASE_ANON_KEY;
-const db=url&&key?createClient(url,key,{auth:{flowType:'pkce',detectSessionInUrl:false,persistSession:true,autoRefreshToken:true}}):null,app=document.querySelector('#app');
+const db=url&&key?createClient(url,key,{auth:{flowType:'implicit',detectSessionInUrl:true,persistSession:true,autoRefreshToken:true}}):null,app=document.querySelector('#app');
 const esc=x=>String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[c]));
 const RANCH_ROLE_ID='1557403792088104980';
-const BUILD_LABEL='OAuth diagnostic 14-10-v2';
+const BUILD_LABEL='OAuth session v3';
 const cash=n=>Number(n||0).toLocaleString('fr-FR',{maximumFractionDigits:2})+' $';
 let session,member,tab='home',articles=[],harvests=[],deliveries=[],payroll=[],employees=[],settings=[];
 const admin=()=>['admin','manager'].includes(member?.role);
@@ -19,18 +19,16 @@ async function boot(){
   const params=new URLSearchParams(window.location.search);
   const hash=new URLSearchParams(window.location.hash.slice(1));
   const authError=params.get('error_description')||params.get('error')||hash.get('error_description')||hash.get('error');
+  // Laisser supabase-js terminer le callback implicite et stocker la session.
   let callbackError=null;
-  try{
-    if(params.has('code')){
-      const {error}=await db.auth.exchangeCodeForSession(params.get('code'));
-      if(error)throw error;
-    }else if(hash.has('access_token')&&hash.has('refresh_token')){
-      const {error}=await db.auth.setSession({access_token:hash.get('access_token'),refresh_token:hash.get('refresh_token')});
-      if(error)throw error;
-    }
+  let sessionError=null;
+  try {
+    const result=await db.auth.initialize();
+    if(result.error)callbackError=result.error.message;
+    const resultSession=await db.auth.getSession();
+    session=resultSession.data?.session;
+    sessionError=resultSession.error;
   }catch(e){callbackError=e?.message||String(e)}
-  const {data,error:sessionError}=await db.auth.getSession();
-  session=data?.session;
   if(!session){
     login();
     if(authError)message('Discord / Supabase : '+authError,true);
