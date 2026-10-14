@@ -8,6 +8,26 @@ const BUILD_LABEL='OAuth v8 · gestion intégrée';
 const cash=n=>Number(n||0).toLocaleString('fr-FR',{maximumFractionDigits:2})+' $';
 const orderDetails=o=>{const items=o.data?.items||o.data?.lines||o.data?.products;if(!Array.isArray(items))return o.products||'';return items.map(i=>{const name=String(i.name||i.product||i.article||'Article'),qty=Number(i.quantity??i.qty??1),article=articles.find(a=>a.name?.trim().toLowerCase()===name.trim().toLowerCase()),factor=Number(article?.data?.unitsPerOrder||1);return name+' : '+qty+' Discord = '+(qty*factor)+' unités'}).join(' ; ')};
 let session,member,tab='home',articles=[],harvests=[],deliveries=[],payroll=[],employees=[],settings=[],orders=[];
+let ordersChannel=null,ordersRefreshBusy=false;
+async function refreshOrdersLive(){
+  if(!db||!session||!member||ordersRefreshBusy||tab!=='orders'||document.hidden)return;
+  ordersRefreshBusy=true;
+  try{
+    const {data,error}=await db.from('ranch_orders').select('*').order('created_at',{ascending:false}).limit(500);
+    if(error)throw error;
+    const before=JSON.stringify(orders.map(x=>[x.id,x.status,x.updated_at]));
+    orders=(data||[]).reverse();
+    const after=JSON.stringify(orders.map(x=>[x.id,x.status,x.updated_at]));
+    if(before!==after&&tab==='orders')view();
+  }catch(e){console.warn('Ranch orders refresh',e.message)}
+  finally{ordersRefreshBusy=false}
+}
+function startOrdersLive(){
+  if(ordersChannel||!db)return;
+  ordersChannel=db.channel('ranch-orders-live').on('postgres_changes',{event:'*',schema:'public',table:'ranch_orders'},()=>{refreshOrdersLive()}).subscribe();
+  setInterval(refreshOrdersLive,15000);
+}
+
 const admin=()=>['admin','manager'].includes(member?.role);
 const mine=(rows,col)=>admin()?rows:rows.filter(x=>x.data?.user_id===session.user.id||x.user_id===session.user.id||x[col]===who());
 const who=()=>employees.find(x=>x.user_id===session?.user?.id)?.name||session?.user?.email||'Fermier';
@@ -49,6 +69,7 @@ async function boot(){
     member=r.data;
     await load();
     draw();
+    startOrdersLive();
   }catch(e){
     app.innerHTML='<div class="login"><h1>Accès au ranch</h1><p class="bad">'+esc(e.message)+'</p><button id="out">Déconnexion</button></div>';
     document.querySelector('#out').onclick=async()=>{await db.auth.signOut();login()};
