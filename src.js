@@ -71,7 +71,7 @@ async function boot(){
     draw();
     startOrdersLive();
   }catch(e){
-    app.innerHTML='<div class="login"><h1>Accès au ranch</h1><p class="bad">'+esc(e.message)+'</p><button id="out">Déconnexion</button></div>';
+    app.innerHTML='<div class="ranch-auth"><div class="auth-scenery"><div class="auth-brand"><span>🌾</span><strong>LUCKY JIM’S RANCH</strong></div><div class="auth-hero-copy"><span class="eyebrow">GRAPESEED • SAN ANDREAS</span><h1>Accès au<br>Ranch.</h1><p>Votre espace de gestion, réservé à l’équipe.</p></div><div class="auth-scenery-foot">LUCKY JIM’S RANCH</div></div><div class="auth-form-side"><div class="auth-form-card"><span class="auth-badge">AUTHENTIFICATION</span><h2>Connexion impossible</h2><p class="bad">'+esc(e.message)+'</p><button id="out" class="discord-login">↪ Se déconnecter et réessayer</button></div></div></div>';
     document.querySelector('#out').onclick=async()=>{await db.auth.signOut();login()};
   }
 }
