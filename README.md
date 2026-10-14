@@ -33,3 +33,5 @@ Le site est publié par GitHub Actions vers GitHub Pages. Configurer les variabl
 Dans Supabase **Panel Ranch** → Authentication → Providers → Discord, activer Discord et renseigner le **Client ID** et le **Client Secret** de l'application Discord (ne jamais les mettre sur GitHub). Dans Discord Developer Portal → OAuth2, enregistrer comme Redirect URI **l'URL de callback Supabase affichée dans le fournisseur Discord**, généralement `https://lizjrqnkmpjrxtwjxszt.supabase.co/auth/v1/callback`. Dans Supabase → Authentication → URL Configuration, ajouter `https://cgasmj-blip.github.io/LuckyJimsRanchPanel/` aux Redirect URLs autorisées. Vérifier que `ranch_memberships` et les comptes employés sont associés aux utilisateurs Supabase créés par OAuth. Le simple fait de se connecter avec Discord ne donne pas de droits d'administration et ne vérifie pas automatiquement l'appartenance à un serveur Discord.
 
 <!-- Relance manuelle du déploiement GitHub Pages après correction de l'URL Supabase. -->
+
+<!-- Relance du déploiement après correction de VITE_SUPABASE_URL (2026-10-14). -->
