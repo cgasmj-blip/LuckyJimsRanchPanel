@@ -38,6 +38,10 @@ jobs:
             echo "::error::Missing VITE_SUPABASE_ANON_KEY in Settings > Secrets and variables > Actions > Variables"
             exit 1
           fi
+          if [[ ! "$VITE_SUPABASE_URL" =~ ^https://[a-z0-9-]+[.]supabase[.]co/?$ ]]; then
+            echo "::error::VITE_SUPABASE_URL must be the project root URL (https://PROJECT.supabase.co), without /rest/v1 or /auth/v1"
+            exit 1
+          fi
           echo "Supabase public configuration is present."
       - name: Build site
         env:
