@@ -8,7 +8,7 @@ const BUILD_LABEL='Ranch Panel · nouvelle interface';
 const cash=n=>Number(n||0).toLocaleString('fr-FR',{maximumFractionDigits:2})+' $';
 const orderDetails=o=>{const items=o.data?.items||o.data?.lines||o.data?.products;if(!Array.isArray(items))return o.products||'';return items.map(i=>{const name=String(i.name||i.product||i.article||'Article'),qty=Number(i.quantity??i.qty??1),article=articles.find(a=>a.name?.trim().toLowerCase()===name.trim().toLowerCase()),factor=Number(article?.data?.unitsPerOrder||1);return name+' : '+qty+' Discord = '+(qty*factor)+' unités'}).join(' ; ')};
 let session,member,tab='home',articles=[],harvests=[],deliveries=[],payroll=[],employees=[],settings=[],orders=[];
-let ordersChannel=null,ordersRefreshBusy=false;
+let ordersChannel=null,ordersRefreshBusy=false,ordersRefreshTimer=null;
 async function refreshOrdersLive(){
   if(!db||!session||!member||ordersRefreshBusy||tab!=='orders'||document.hidden)return;
   ordersRefreshBusy=true;
@@ -17,16 +17,17 @@ async function refreshOrdersLive(){
     const before=JSON.stringify(orders.map(x=>[x.id,x.status,x.updated_at,x.order_number,x.total_amount]));
     orders=data;
     const after=JSON.stringify(orders.map(x=>[x.id,x.status,x.updated_at,x.order_number,x.total_amount]));
-    if(before!==after&&tab==='orders')view();
+    if(before!==after&&tab==='orders'){const search=document.querySelector('#order-search')?.value||'';const status=document.querySelector('#order-status')?.value||'';view();const searchBox=document.querySelector('#order-search'),statusBox=document.querySelector('#order-status');if(searchBox){searchBox.value=search;statusBox.value=status;searchBox.dispatchEvent(new Event('input'))}}
   }catch(e){console.warn('Ranch orders refresh',e.message)}
   finally{ordersRefreshBusy=false}
 }
 function startOrdersLive(){
   if(ordersChannel||!db)return;
   ordersChannel=db.channel('ranch-orders-live').on('postgres_changes',{event:'*',schema:'public',table:'ranch_orders'},()=>{refreshOrdersLive()}).subscribe();
-  setInterval(refreshOrdersLive,15000);
+  ordersRefreshTimer=setInterval(refreshOrdersLive,15000);
 }
 
+async function stopOrdersLive(){if(ordersRefreshTimer!==null){clearInterval(ordersRefreshTimer);ordersRefreshTimer=null}if(ordersChannel&&db){await db.removeChannel(ordersChannel);ordersChannel=null}ordersRefreshBusy=false}
 const admin=()=>['admin','manager'].includes(member?.role);
 const mine=(rows,col)=>admin()?rows:rows.filter(x=>x.data?.user_id===session.user.id||x.user_id===session.user.id||x[col]===who());
 const who=()=>employees.find(x=>x.user_id===session?.user?.id)?.name||session?.user?.user_metadata?.full_name||session?.user?.user_metadata?.name||session?.user?.email||'Fermier';
@@ -72,7 +73,7 @@ async function boot(){
     startOrdersLive();
   }catch(e){
     app.innerHTML='<div class="ranch-auth"><div class="auth-scenery"><div class="auth-brand"><span>🌾</span><strong>LUCKY JIM’S RANCH</strong></div><div class="auth-hero-copy"><span class="eyebrow">GRAPESEED • SAN ANDREAS</span><h1>Accès au<br>Ranch.</h1><p>Votre espace de gestion, réservé à l’équipe.</p></div><div class="auth-scenery-foot">LUCKY JIM’S RANCH</div></div><div class="auth-form-side"><div class="auth-form-card"><span class="auth-badge">AUTHENTIFICATION</span><h2>Connexion impossible</h2><p class="bad">'+esc(e.message)+'</p><button id="out" class="discord-login">↪ Se déconnecter et réessayer</button></div></div></div>';
-    document.querySelector('#out').onclick=async()=>{await db.auth.signOut();login()};
+    document.querySelector('#out').onclick=async()=>{await stopOrdersLive();await db.auth.signOut();session=null;member=null;articles=[];harvests=[];deliveries=[];payroll=[];employees=[];settings=[];orders=[];login()};
   }
 }
 const menuItems=()=>[['home','⌂','Vue d’ensemble'],['harvest','🌿','Récoltes'],['orders','▣','Commandes'],['billing','▤','Registre facturation'],['delivery','↗','Livraisons'],['pay','◈','Rémunérations'],...(admin()?[['article','▤','Catalogue & tarifs'],['stock','◫','Stocks & recettes'],['staff','♙','Équipe'],['settings','⚙','Paramètres']]:[])];
