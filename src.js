@@ -12,12 +12,14 @@ let ordersChannel=null,ordersRefreshBusy=false,ordersRefreshTimer=null;
 async function refreshOrdersLive(){
   if(!db||!session||!member||ordersRefreshBusy||tab!=='orders'||document.hidden)return;
   ordersRefreshBusy=true;
+  const activeUserId=session.user.id;
   try{
     const data=await fetchAllRows('ranch_orders');
+    if(!session||session.user.id!==activeUserId||!member||tab!=='orders')return;
     const before=JSON.stringify(orders.map(x=>[x.id,x.status,x.updated_at,x.order_number,x.total_amount]));
     orders=data;
     const after=JSON.stringify(orders.map(x=>[x.id,x.status,x.updated_at,x.order_number,x.total_amount]));
-    if(before!==after&&tab==='orders'){const search=document.querySelector('#order-search')?.value||'';const status=document.querySelector('#order-status')?.value||'';view();const searchBox=document.querySelector('#order-search'),statusBox=document.querySelector('#order-status');if(searchBox){searchBox.value=search;statusBox.value=status;searchBox.dispatchEvent(new Event('input'))}}
+    if(before!==after&&tab==='orders'){const searchBox=document.querySelector('#order-search'),statusBox=document.querySelector('#order-status');const search=searchBox?.value||'',status=statusBox?.value||'';const focused=document.activeElement===searchBox?'search':document.activeElement===statusBox?'status':null;const caret=focused==='search'?searchBox.selectionStart:null;view();const nextSearch=document.querySelector('#order-search'),nextStatus=document.querySelector('#order-status');if(nextSearch&&nextStatus){nextSearch.value=search;nextStatus.value=status;nextSearch.dispatchEvent(new Event('input'));if(focused==='search'){nextSearch.focus();if(caret!==null)nextSearch.setSelectionRange(caret,caret)}else if(focused==='status')nextStatus.focus()}}
   }catch(e){console.warn('Ranch orders refresh',e.message)}
   finally{ordersRefreshBusy=false}
 }
