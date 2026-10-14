@@ -25,6 +25,12 @@ Panel GitHub Pages indépendant de tout projet EMS/LSPD.
 
 La synchronisation Discord est **manuelle depuis le panel** tant qu'aucune tâche planifiée côté serveur n'est configurée. Le simple bouton ne remplace pas le secret Discord.
 
+## Sécurité du registre des paies
+
+Les paies récentes sont créées exclusivement par la fonction SQL sécurisée `ranch_record_payroll_period` (contrôle du rôle et des périodes chevauchantes). La migration Supabase Ranch `protect_ranch_payroll_ledger_and_membership_bootstrap` supprime les politiques RLS d'insertion, de modification et de suppression directes de `ranch_payroll_history` pour les clients authentifiés. Elle désactive également l'auto-attribution du premier rôle administrateur via `ranch_memberships` : les nouvelles adhésions doivent être accordées par un responsable existant. Une adhésion active existait au moment de l'application de cette migration.
+
+**À vérifier avant la mise en production :** accès de chaque grade, impossibilité de modifier une paie enregistrée depuis un client connecté, et procédure de récupération administrative via l'interface Supabase en cas de perte de tous les responsables. Les anciennes archives restent à importer ; les fonctions disposant de privilèges élevés doivent rester auditées.
+
 ## Import historique
 
 Les articles et une partie des commandes/récoltes ont été repris de l'ancien Google Sheets. Les **quatre fiches employés renseignées** dans la feuille source ont été importées (nom RP, grade, statut et identifiant historique uniquement). Les champs d'identification et mots de passe de l'ancien fichier **n'ont pas été importés**.
