@@ -1,37 +1,46 @@
-# Lucky Jim's Ranch Panel 🤠🌾
+# Lucky Jim's Ranch — Panel 🌾
 
-Panel web indépendant du relais Discord et du projet LSPD/EMS.
+Panel GitHub Pages indépendant de tout projet EMS/LSPD.
 
-## Fonctionnalités (version initiale)
-- Connexion via Supabase Auth et adhésion Ranch active.
-- Tableau de bord western Texas.
-- Catalogue d'articles et déclaration de récoltes avec primes calculées en base.
-- Livraisons sans commande, avec prime configurée en base.
-- Consultation des historiques de récoltes, livraisons et paies.
-- Ajout d'articles et consultation des employés pour les responsables.
+**Site :** https://cgasmj-blip.github.io/LuckyJimsRanchPanel/
 
-## Démarrage
-1. Installer Node.js 20+ puis lancer `npm install`.
-2. Copier `.env.example` en `.env`, y renseigner **uniquement** l'URL et la clé publique (publishable/anon) du projet Supabase **Panel Ranch**.
-3. Vérifier le schéma et les politiques RLS de votre base. Examiner `supabase/migration.sql` **avant** de l'exécuter. Ne pas appliquer sans revue : la migration ne configure pas toutes les politiques RLS nécessaires.
-4. Créer les utilisateurs dans Supabase Auth, leurs profils employés et leurs adhésions Ranch.
-5. Lancer `npm run dev`, puis `npm run build`.
+## Fonctionnalités développées
 
-## Sécurité
-- Ne jamais publier la clé `service_role`, des mots de passe, des webhooks ou un fichier `.env`.
-- L'ancien fichier Google Sheets contient des mots de passe en clair : **ne pas les importer** ; créer de nouveaux accès via Supabase Auth.
-- Un dépôt public n'ouvre pas l'accès aux données Supabase : les règles RLS doivent être correctes.
+- Connexion Discord OAuth via Supabase Ranch et vérification des grades par Edge Function.
+- Tableau de bord avec six thèmes.
+- Récoltes par article, sans boutons de quantités prédéfinies ni affichage des primes dans les tuiles ou le récapitulatif.
+- Commandes ExpressSantos : registre, recherche, filtre par statut, rafraîchissement, bouton de synchronisation Discord.
+- Livraisons et rapprochement facultatif avec une commande.
+- Registre de facturation **sans génération de devis ou facture**.
+- Catalogue, tarifs, stocks, mouvements et transformations par recettes.
+- Fiches employés et historique des rémunérations.
+- Saisie des paies par période avec blocage serveur des périodes chevauchantes (pour les nouvelles paies).
 
-## État réel
-**Version de démarrage, non prête à déployer en production.** À terminer : politiques RLS, vérification du schéma existant, gestion avancée des articles et des tarifs, validation de livraisons, paies complètes, stocks, recettes et transformations, gestion des comptes, import des articles et tests. Le projet ne gère pas les commandes.
+## Configuration nécessaire
 
+1. Configurer les variables GitHub Actions `VITE_SUPABASE_URL` et `VITE_SUPABASE_ANON_KEY` avec **uniquement** l'URL et la clé publique du projet Ranch `lizjrqnkmpjrxtwjxszt`.
+2. Activer Discord OAuth dans Supabase et autoriser `https://cgasmj-blip.github.io/LuckyJimsRanchPanel/` comme Redirect URL. Callback fournisseur : `https://lizjrqnkmpjrxtwjxszt.supabase.co/auth/v1/callback`.
+3. Configurer les Edge Functions Ranch de contrôle des grades et de synchronisation ExpressSantos. Pour lire le salon Discord, fournir le secret **`RANCH_DISCORD_BOT_TOKEN` dans les secrets Supabase Ranch**, jamais dans le dépôt ou le navigateur.
+4. Définir les adhésions Ranch et tester les politiques RLS avec les rôles réels.
 
-## Publication
-Le site est publié par GitHub Actions vers GitHub Pages. Configurer les variables Actions `VITE_SUPABASE_URL` et `VITE_SUPABASE_ANON_KEY`, puis lancer le workflow `Deploy Lucky Jim's Ranch to GitHub Pages`.
+La synchronisation Discord est **manuelle depuis le panel** tant qu'aucune tâche planifiée côté serveur n'est configurée. Le simple bouton ne remplace pas le secret Discord.
 
-## Connexion Discord OAuth
-Dans Supabase **Panel Ranch** → Authentication → Providers → Discord, activer Discord et renseigner le **Client ID** et le **Client Secret** de l'application Discord (ne jamais les mettre sur GitHub). Dans Discord Developer Portal → OAuth2, enregistrer comme Redirect URI **l'URL de callback Supabase affichée dans le fournisseur Discord**, généralement `https://lizjrqnkmpjrxtwjxszt.supabase.co/auth/v1/callback`. Dans Supabase → Authentication → URL Configuration, ajouter `https://cgasmj-blip.github.io/LuckyJimsRanchPanel/` aux Redirect URLs autorisées. Vérifier que `ranch_memberships` et les comptes employés sont associés aux utilisateurs Supabase créés par OAuth. Le simple fait de se connecter avec Discord ne donne pas de droits d'administration et ne vérifie pas automatiquement l'appartenance à un serveur Discord.
+## Import historique
 
-<!-- Relance manuelle du déploiement GitHub Pages après correction de l'URL Supabase. -->
+Les articles et une partie des commandes/récoltes ont été repris de l'ancien Google Sheets. Les **quatre fiches employés renseignées** dans la feuille source ont été importées (nom RP, grade, statut et identifiant historique uniquement). Les champs d'identification et mots de passe de l'ancien fichier **n'ont pas été importés**.
 
-<!-- Relance du déploiement après correction de VITE_SUPABASE_URL (2026-10-14). -->
+Les anciennes paies et certaines lignes de commandes/récoltes restent à reprendre ou à rapprocher. Les anciennes paies sans dates de période ne bénéficient pas du blocage automatique des chevauchements.
+
+## Développement
+
+```sh
+npm install
+npm run dev
+npm run build
+```
+
+Créer un `.env` local depuis `.env.example` avec la clé **publique** Supabase Ranch uniquement. Ne jamais committer `.env`, `service_role`, mots de passe, webhooks ou tokens Discord.
+
+## État de livraison
+
+**Travaux non encore validés de bout en bout** : import historique restant, automatisation ExpressSantos, tests de sécurité par grade, opérations de stocks/paies et vérification de la publication GitHub Pages. Les fonctionnalités ci-dessus sont implémentées, pas toutes certifiées en conditions réelles.
