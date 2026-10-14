@@ -30,7 +30,7 @@ function startOrdersLive(){
 
 const admin=()=>['admin','manager'].includes(member?.role);
 const mine=(rows,col)=>admin()?rows:rows.filter(x=>x.data?.user_id===session.user.id||x.user_id===session.user.id||x[col]===who());
-const who=()=>employees.find(x=>x.user_id===session?.user?.id)?.name||session?.user?.email||'Fermier';
+const who=()=>employees.find(x=>x.user_id===session?.user?.id)?.name||session?.user?.user_metadata?.full_name||session?.user?.user_metadata?.name||session?.user?.email||'Fermier';
 const tbl=(heads,rows)=>'<div class="scroll"><table><thead><tr>'+heads.map(x=>'<th>'+esc(x)+'</th>').join('')+'</tr></thead><tbody>'+rows.map(row=>'<tr>'+row.map(x=>'<td>'+esc(x)+'</td>').join('')+'</tr>').join('')+'</tbody></table></div>';
 function message(s,bad=false){const el=document.querySelector('#notice');if(el){el.textContent=s;el.className=bad?'bad':'good'}}
 async function load(){const names=['ranch_articles','ranch_harvests','ranch_deliveries','ranch_payroll_history','ranch_employees','ranch_settings','ranch_orders'];const results=await Promise.all(names.map(n=>db.from(n).select('*')));for(const r of results)if(r.error)throw r.error;[articles,harvests,deliveries,payroll,employees,settings,orders]=results.map(r=>r.data||[])}
