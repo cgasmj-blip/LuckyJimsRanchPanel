@@ -1,0 +1,23 @@
+/* Administration Ranch — cards with clear hierarchy */
+#article-editor,#stock-editor{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,310px),1fr));gap:18px;align-items:start}
+#article-editor details,#stock-editor details{width:100%;min-width:0;margin:0;padding:0;display:block;background:var(--surface);border:1px solid var(--line);border-radius:20px;box-shadow:0 8px 24px #0000000d;overflow:hidden;transition:box-shadow .2s,transform .2s}
+#article-editor details:hover,#stock-editor details:hover{box-shadow:0 12px 30px #00000018;transform:translateY(-2px)}
+#article-editor summary,#stock-editor summary{list-style:none;cursor:pointer;padding:20px 22px;font-weight:800;line-height:1.5;background:var(--surface-soft);color:var(--ink);border-bottom:1px solid transparent}
+#article-editor summary::-webkit-details-marker,#stock-editor summary::-webkit-details-marker{display:none}
+#article-editor summary:after,#stock-editor summary:after{content:'⌄';float:right;color:var(--accent);font-size:20px}
+#article-editor details[open] summary,#stock-editor details[open] summary{border-color:var(--line)}
+#article-editor details[open] summary:after,#stock-editor details[open] summary:after{content:'⌃'}
+#article-editor form,#stock-editor form{padding:22px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+#article-editor form label,#stock-editor form label{display:flex;flex-direction:column;gap:7px;min-width:0;font-size:12px;letter-spacing:.015em;font-weight:750;color:var(--muted)}
+#article-editor form label:first-child,#article-editor form label:nth-child(2),#article-editor form label:nth-child(6),#article-editor form .check-row,#stock-editor form label:nth-child(3),#stock-editor form .check-row{grid-column:1/-1}
+#article-editor form input:not([type=checkbox]),#stock-editor form input:not([type=checkbox]),#stock-editor form textarea{width:100%;box-sizing:border-box;min-width:0;min-height:43px;border:1px solid var(--line);border-radius:11px;padding:10px 12px;background:var(--surface-soft);color:var(--ink);font:inherit;font-size:14px}
+#stock-editor form textarea{resize:vertical;min-height:110px}
+#article-editor form input:focus,#stock-editor form input:focus,#stock-editor form textarea:focus{outline:2px solid var(--accent);outline-offset:1px}
+#article-editor form .check-row,#stock-editor form .check-row{display:flex!important;flex-direction:row!important;align-items:center;justify-content:flex-start;gap:10px;padding:13px;border-radius:12px;background:var(--surface-soft);color:var(--ink);font-size:13px}
+#article-editor input[type=checkbox],#stock-editor input[type=checkbox]{flex:none;width:18px!important;height:18px!important;margin:0!important;accent-color:var(--accent)}
+#article-editor form button,#stock-editor form button{min-width:0;padding:12px;border-radius:11px;font-weight:800;cursor:pointer}
+#article-editor form button[type=submit],#stock-editor form button[type=submit]{background:var(--accent);color:white;border:0}
+#article-editor .toggle-article,#stock-editor .remove-recipe{background:var(--surface-soft);color:var(--muted);border:1px solid var(--line)}
+#stock-editor form>div:last-child{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:10px}
+#stock-editor form>div:last-child button{flex:1}
+@media(max-width:450px){#article-editor form,#stock-editor form{grid-template-columns:1fr}#article-editor form label,#stock-editor form label{grid-column:1/-1}}
