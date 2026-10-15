@@ -12,6 +12,15 @@ function downloadPayrollCsv(rows){const csvCell=v=>{let s=String(v??'');if(/^\s*
 function downloadOrdersCsv(rows){const csvCell=v=>{let s=String(v??'');if(/^\s*[=+@-]/.test(s))s=String.fromCharCode(39)+s;return String.fromCharCode(34)+s.replaceAll(String.fromCharCode(34),String.fromCharCode(34,34))+String.fromCharCode(34)};const data=[['Date','Numéro','Entreprise','Téléphone','Produits','Montant','Statut'],...rows.map(o=>[o.order_date||o.created_at,o.order_number,o.company,o.phone,orderDetails(o),o.total_amount,o.status])].map(row=>row.map(csvCell).join(';')).join(String.fromCharCode(13,10));const blob=new Blob([String.fromCharCode(65279),data],{type:'text/csv;charset=utf-8'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='ranch-commandes.csv';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000)}
 let session,member,tab='home',articles=[],harvests=[],deliveries=[],payroll=[],employees=[],settings=[],orders=[];
 let ordersChannel=null,ordersRefreshBusy=false,ordersRefreshTimer=null,ordersPageState=0;
+let discordOrdersSyncBusy=false,discordOrdersSyncTimer=null;
+async function syncLatestDiscordOrders(){
+ if(!db||!session||!member||!admin()||discordOrdersSyncBusy||document.hidden)return;
+ discordOrdersSyncBusy=true;
+ try{const {data,error}=await db.functions.invoke('ranch-expresssantos-sync',{body:{recent:true}});if(error)throw error;if(data?.inserted>0){await load();if(tab==='orders')draw();message(data.inserted+' nouvelle(s) commande(s) ExpressSantos synchronisée(s).')}}
+ catch(e){console.warn('Synchronisation automatique ExpressSantos',e.message)}
+ finally{discordOrdersSyncBusy=false}
+}
+
 async function refreshOrdersLive(){
   if(!db||!session||!member||ordersRefreshBusy||tab!=='orders'||document.hidden)return;
   ordersRefreshBusy=true;
@@ -80,6 +89,8 @@ async function boot(){
     await load();
     draw();
     startOrdersLive();
+    if(admin()&&!discordOrdersSyncTimer){syncLatestDiscordOrders();discordOrdersSyncTimer=setInterval(syncLatestDiscordOrders,60000)}
+
   }catch(e){
     app.innerHTML='<div class="ranch-auth"><div class="auth-scenery"><div class="auth-brand"><span>🌾</span><strong>LUCKY JIM’S RANCH</strong></div><div class="auth-hero-copy"><span class="eyebrow">GRAPESEED • SAN ANDREAS</span><h1>Accès au<br>Ranch.</h1><p>Votre espace de gestion, réservé à l’équipe.</p></div><div class="auth-scenery-foot">LUCKY JIM’S RANCH</div></div><div class="auth-form-side"><div class="auth-form-card"><span class="auth-badge">AUTHENTIFICATION</span><h2>Connexion impossible</h2><p class="bad">'+esc(e.message)+'</p><button id="out" class="discord-login">↪ Se déconnecter et réessayer</button></div></div></div>';
     document.querySelector('#out').onclick=async()=>{await stopOrdersLive();await db.auth.signOut();session=null;member=null;articles=[];harvests=[];deliveries=[];payroll=[];employees=[];settings=[];orders=[];login()};
@@ -112,7 +123,7 @@ if(tab==='orders'){
  const done=s=>['livree','livre','terminee','termine','annulee','annule','cancelled','paid','payee','encaissee','reglee'].includes(norm(s));
  const ready=s=>['prete','pret','ready'].includes(norm(s));
  const root=document.createElement('div');root.className='stats';
- el.innerHTML='<div class="panel"><h2>📦 Entreprises</h2><p>Ouvrez une grande tuile pour consulter son registre de commandes.</p>'+(admin()?'<button id="sync-discord-orders" type="button">↻ Importer les commandes Discord depuis le 9 août 2026</button>':'')+'</div><div id="company-workspace"></div>';if(admin()){const syncBtn=document.querySelector('#sync-discord-orders');syncBtn.onclick=async()=>{syncBtn.disabled=true;syncBtn.textContent='Import Discord en cours…';try{const {data,error}=await db.functions.invoke('ranch-expresssantos-sync');if(error){let detail=error.message;try{const payload=await error.context?.json();detail=payload?.error||detail}catch(_){}throw Error(detail)}await load();draw();message('Import terminé : '+data.inserted+' commande(s) ajoutée(s), '+data.scanned+' message(s) parcouru(s).'+(data.complete?'':' Import incomplet, relance nécessaire.'))}catch(e){syncBtn.disabled=false;syncBtn.textContent='↻ Réessayer l’import Discord';message('Import Discord : '+e.message,true)}}}
+ el.innerHTML='<div class="panel"><h2>📦 Entreprises</h2><p>Ouvrez une grande tuile pour consulter son registre de commandes. Les nouvelles commandes webhook ExpressSantos sont synchronisées automatiquement lorsque la direction est connectée.</p></div><div id="company-workspace"></div>';
  const workspace=document.querySelector('#company-workspace');workspace.appendChild(root);
  const renderCompany=g=>{workspace.innerHTML='';const back=document.createElement('button');back.textContent='← Toutes les entreprises';back.onclick=()=>{workspace.innerHTML='';workspace.appendChild(root)};workspace.appendChild(back);const panel=document.createElement('div');panel.className='panel';const title=document.createElement('h2');title.textContent='🏢 '+g.name+' · '+g.type;panel.appendChild(title);
  if(String(member?.discord_grade||session?.user?.user_metadata?.ranch_discord_grade||'').trim().toLowerCase()==='patron'&&g.items.length){const reset=document.createElement('button');reset.type='button';reset.textContent='🔄 Changement de propriétaire';reset.style.cssText='margin:12px 0;padding:12px 16px;border-radius:12px;background:var(--surface-soft);border:1px solid var(--line);color:var(--ink);font-weight:800;cursor:pointer';reset.onclick=async()=>{const ids=g.items.map(o=>o.id);const ok=await ranchConfirm({title:'Changement de propriétaire ?',description:'Archiver et remettre à zéro les '+ids.length+' commandes de « '+g.name+' » uniquement ? Les autres entreprises ne seront pas touchées.',confirmText:'Confirmer la remise à zéro',danger:true});if(!ok)return;reset.disabled=true;const {data,error}=await db.rpc('ranch_reset_company_orders',{p_order_ids:ids,p_company:g.name});if(error){reset.disabled=false;return message(error.message,true)}await load();draw();message(data+' commande(s) archivées pour '+g.name)};panel.appendChild(reset)}
