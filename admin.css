@@ -21,3 +21,8 @@
 #stock-editor form>div:last-child{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:10px}
 #stock-editor form>div:last-child button{flex:1}
 @media(max-width:450px){#article-editor form,#stock-editor form{grid-template-columns:1fr}#article-editor form label,#stock-editor form label{grid-column:1/-1}}
+
+.ranch-confirm-overlay{position:fixed!important;inset:0!important;z-index:99999!important;display:flex!important;align-items:center!important;justify-content:center!important;padding:18px!important;background:rgba(0,0,0,.58)!important}
+.ranch-confirm-dialog{position:relative!important;margin:auto!important;width:min(100%,440px)!important;max-height:calc(100dvh - 36px)!important;overflow-y:auto!important}
+.delivery-team-options label{display:flex!important;flex-direction:row!important;align-items:center!important;gap:10px!important;width:100%!important}
+.delivery-team-options input[type=checkbox]{appearance:auto!important;flex:0 0 18px!important;width:18px!important;height:18px!important;margin:0!important}
